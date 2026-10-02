@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=420">
+  <title>Cyphr</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+    :root {
+      --bg: #0c0e14;
+      --surface: #151821;
+      --surface2: #1c2030;
+      --border: #262b3d;
+      --text: #e4e6f0;
+      --text2: #8b90a5;
+      --accent: #00d4aa;
+      --accent2: #00b894;
+      --danger: #ff6b6b;
+      --danger-bg: #2a1520;
+      --warn: #ffc857;
+      --code-bg: #1a1e2e;
+      --radius: 10px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 400px;
+      min-height: 300px;
+      max-height: 580px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      overflow-y: auto;
+    }
+    body::-webkit-scrollbar { width: 4px; }
+    body::-webkit-scrollbar-track { background: transparent; }
+    body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px 10px; border-bottom: 1px solid var(--border);
+      background: var(--surface); position: sticky; top: 0; z-index: 10;
+    }
+    .header h1 {
+      font-size: 14px; font-weight: 700; letter-spacing: -0.3px;
+      background: linear-gradient(135deg, var(--accent), #00e5ff);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .header-actions { display: flex; gap: 4px; }
+
+    /* ── Buttons ── */
+    .btn { border: none; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600; border-radius: 6px; transition: all 0.15s; }
+    .btn-icon { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+    .btn-icon:hover { background: var(--border); color: var(--text); }
+    .btn-icon svg { flex-shrink: 0; }
+    .btn-primary { background: var(--accent); color: var(--bg); padding: 8px 16px; }
+    .btn-primary:hover { background: var(--accent2); }
+    .btn-sm { padding: 5px 10px; font-size: 11px; }
+    .btn-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid #3a1a2a; }
+    .btn-danger:hover { background: #3a1520; }
+    .btn-ghost { background: transparent; color: var(--text2); }
+    .btn-ghost:hover { color: var(--text); background: var(--surface2); }
+
+    /* ── Views — FIX: no display on IDs, only via .view/.active ── */
+    .view { display: none; }
+    .view.active { display: block; }
+    .view-center.active { display: flex; }
+
+    /* ── Lock Screen ── */
+    .lock-screen {
+      flex-direction: column; align-items: center; justify-content: center;
+      padding: 48px 32px; text-align: center;
+    }
+    .lock-icon {
+      width: 56px; height: 56px; border-radius: 16px;
+      background: linear-gradient(135deg, var(--accent), #00e5ff);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px; box-shadow: 0 4px 24px rgba(0,212,170,0.25); color: var(--bg);
+    }
+    .lock-screen h2 { font-size: 16px; margin-bottom: 4px; }
+    .lock-screen .subtitle { color: var(--text2); font-size: 12px; margin-bottom: 20px; }
+
+    .input-group { width: 100%; margin-bottom: 12px; }
+    .input-group input[type="password"], .input-group input[type="text"] {
+      width: 100%; padding: 10px 12px; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-family: inherit; font-size: 13px; outline: none; transition: border-color 0.15s;
+    }
+    .input-group input:focus { border-color: var(--accent); }
+    .input-group input::placeholder { color: var(--text2); }
+    .error-msg { color: var(--danger); font-size: 11px; margin-top: 6px; display: none; }
+    .hint-display { color: var(--text2); font-size: 11px; margin-bottom: 12px; font-style: italic; }
+
+    /* ── Remember + Tooltip ── */
+    .remember-row { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; width: 100%; position: relative; }
+    .remember-row input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; }
+    .remember-row label { font-size: 11px; color: var(--text2); cursor: pointer; user-select: none; }
+    .remember-row .warn-icon {
+      width: 16px; height: 16px; color: var(--warn); cursor: help; flex-shrink: 0;
+    }
+    .tooltip-bubble {
+      display: none; position: absolute; bottom: calc(100% + 8px); left: 0; right: 0;
+      background: #2a2520; border: 1px solid #4a3a20; border-radius: 8px;
+      padding: 10px 12px; font-size: 11px; color: var(--warn); line-height: 1.5;
+      z-index: 20; box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    }
+    .tooltip-bubble::after {
+      content: ''; position: absolute; bottom: -6px; left: 20px;
+      width: 10px; height: 10px; background: #2a2520; border-right: 1px solid #4a3a20;
+      border-bottom: 1px solid #4a3a20; transform: rotate(45deg);
+    }
+    .remember-row:hover .tooltip-bubble,
+    .remember-row .warn-icon:focus + .tooltip-bubble { display: block; }
+
+    /* ── Dashboard ── */
+    .accounts-list { padding: 8px; }
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text2); }
+    .empty-state svg { margin-bottom: 12px; opacity: 0.4; }
+    .empty-state p { font-size: 12px; }
+
+    /* ── Account Card ── */
+    .account-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 12px; margin-bottom: 6px; transition: border-color 0.15s;
+    }
+    .account-card:hover { border-color: var(--accent); }
+    .account-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .account-left { display: flex; align-items: center; gap: 10px; }
+    .issuer-icon {
+      width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center;
+      justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0;
+      background: var(--surface2); color: var(--text); overflow: hidden;
+    }
+    .issuer-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+    .account-info h3 { font-size: 13px; font-weight: 600; line-height: 1.2; }
+    .account-info span { font-size: 11px; color: var(--text2); }
+    .account-actions { display: flex; gap: 3px; }
+
+    .otp-display { display: flex; align-items: center; gap: 10px; }
+    .otp-code {
+      font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 700;
+      letter-spacing: 4px; color: var(--accent); cursor: pointer; transition: opacity 0.15s; user-select: all;
+    }
+    .otp-code:hover { opacity: 0.8; }
+    .otp-code.expiring { color: var(--warn); }
+    .otp-code.critical { color: var(--danger); animation: pulse 0.5s infinite alternate; }
+    @keyframes pulse { to { opacity: 0.5; } }
+
+    .countdown-ring { width: 36px; height: 36px; flex-shrink: 0; }
+    .countdown-ring circle { fill: none; stroke-width: 3; }
+    .countdown-ring .bg { stroke: var(--surface2); }
+    .countdown-ring .fg {
+      stroke: var(--accent); stroke-linecap: round;
+      transition: stroke-dashoffset 1s linear, stroke 0.3s;
+      transform: rotate(-90deg); transform-origin: center;
+    }
+    .countdown-ring .fg.expiring { stroke: var(--warn); }
+    .countdown-ring .fg.critical { stroke: var(--danger); }
+    .countdown-text { font-family: 'JetBrains Mono', monospace; font-size: 10px; fill: var(--text2); text-anchor: middle; dominant-baseline: central; }
+
+    .domains-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+    .domain-tag {
+      font-size: 10px; padding: 2px 7px; background: var(--code-bg); border: 1px solid var(--border);
+      border-radius: 4px; color: var(--text2); font-family: 'JetBrains Mono', monospace;
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .domain-favicon { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
+
+    /* ── Forms ── */
+    .form-view { padding: 16px; }
+    .form-title { font-size: 14px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .form-group input, .form-group textarea {
+      width: 100%; padding: 8px 10px; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text); font-family: inherit; font-size: 12px; outline: none;
+    }
+    .form-group input:focus, .form-group textarea:focus { border-color: var(--accent); }
+    .form-group textarea { resize: vertical; min-height: 36px; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+    .form-group .hint { font-size: 10px; color: var(--text2); margin-top: 3px; }
+    .form-actions { display: flex; gap: 8px; margin-top: 16px; }
+    .form-actions .btn { flex: 1; }
+
+    .or-divider { text-align: center; color: var(--text2); font-size: 11px; margin: 12px 0; position: relative; }
+    .or-divider::before, .or-divider::after { content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: var(--border); }
+    .or-divider::before { left: 0; }
+    .or-divider::after { right: 0; }
+
+    /* ── Domain Tags Interactive ── */
+    .domain-tags-wrap { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; padding: 6px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; min-height: 36px; cursor: text; transition: border-color 0.15s; }
+    .domain-tags-wrap:focus-within { border-color: var(--accent); }
+    .dtag {
+      display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px 2px 8px;
+      background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px;
+      font-size: 11px; color: var(--text2); font-family: 'JetBrains Mono', monospace;
+      animation: tagIn 0.15s ease-out;
+    }
+    @keyframes tagIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+    .dtag-x {
+      width: 14px; height: 14px; border: none; background: none; color: var(--text2);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      border-radius: 3px; padding: 0; transition: all 0.1s;
+    }
+    .dtag-x:hover { background: var(--danger-bg); color: var(--danger); }
+    .dtag-input {
+      border: none; background: none; color: var(--text); font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; outline: none; min-width: 80px; flex: 1; padding: 2px 0;
+    }
+    .dtag-input::placeholder { color: #555; }
+
+    /* ── Icon Picker ── */
+    .input-with-paste { display:flex; gap:4px; align-items:stretch; }
+    .input-with-paste input, .input-with-paste textarea { flex:1; min-width:0; }
+    .input-with-paste .btn-paste { flex-shrink:0; width:30px; height:auto; min-height:30px; }
+    .icon-picker-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .icon-preview {
+      width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center;
+      justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0;
+      background: var(--surface2); color: var(--text); border: 1px solid var(--border);
+      overflow: hidden; cursor: pointer; transition: border-color 0.15s;
+    }
+    .icon-preview:hover { border-color: var(--accent); }
+    .icon-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .icon-picker-options { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .icon-picker-options input { width: 100%; padding: 6px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-size: 11px; outline: none; font-family: inherit; }
+    .icon-picker-options input:focus { border-color: var(--accent); }
+    .icon-picker-options .hint { font-size: 9px; color: var(--text2); }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%) translateY(60px);
+      background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+      padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500;
+      z-index: 100; transition: transform 0.25s ease; pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    .status-bar {
+      padding: 6px 16px; font-size: 10px; color: var(--text2);
+      border-top: 1px solid var(--border); display: flex; justify-content: space-between;
+      background: var(--surface); position: sticky; bottom: 0;
+    }
+    .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 4px; vertical-align: middle; }
+
+    /* ── Search ── */
+    .search-bar { padding: 8px; }
+    .search-bar input { width:100%; padding:8px 10px 8px 32px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:12px; outline:none; font-family:inherit; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238b90a5' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:10px center; }
+    .search-bar input:focus { border-color:var(--accent); }
+    .search-bar input::placeholder { color:var(--text2); }
+
+    /* ── Settings / About ── */
+    .setting-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); }
+    .setting-row:last-child { border-bottom:none; }
+    .setting-label { font-size:12px; font-weight:500; }
+    .setting-desc { font-size:10px; color:var(--text2); margin-top:2px; }
+    .toggle { position:relative; width:36px; height:20px; flex-shrink:0; }
+    .toggle input { opacity:0; width:0; height:0; }
+    .toggle .slider { position:absolute; inset:0; background:var(--surface2); border:1px solid var(--border); border-radius:10px; cursor:pointer; transition:.2s; }
+    .toggle .slider::before { content:''; position:absolute; width:14px; height:14px; left:2px; top:2px; background:var(--text2); border-radius:50%; transition:.2s; }
+    .toggle input:checked + .slider { background:var(--accent); border-color:var(--accent); }
+    .toggle input:checked + .slider::before { transform:translateX(16px); background:#fff; }
+    .setting-select { background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); padding:4px 8px; font-size:11px; font-family:inherit; outline:none; }
+    .setting-select:focus { border-color:var(--accent); }
+    .about-card { text-align:center; padding:24px 16px; }
+    .about-card h3 { font-size:15px; margin-bottom:4px; background:linear-gradient(135deg,var(--accent),#00e5ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .about-card p { font-size:11px; color:var(--text2); margin-bottom:12px; }
+    .about-card .version { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text2); padding:4px 10px; background:var(--surface2); border-radius:4px; display:inline-block; }
+    .about-author { margin-top:16px; padding-top:16px; border-top:1px solid var(--border); }
+    .about-author span { font-size:12px; font-weight:600; }
+    .about-author p { font-size:10px; color:var(--text2); }
+
+    /* ── Export/Import ── */
+    .export-options { display:flex; flex-direction:column; gap:8px; }
+    .export-option { padding:12px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:border-color .15s; }
+    .export-option:hover { border-color:var(--accent); }
+    .export-option h4 { font-size:12px; font-weight:600; margin-bottom:2px; }
+    .export-option p { font-size:10px; color:var(--text2); }
+    .warn-box { padding:8px 10px; background:var(--danger-bg); border:1px solid #3a1a2a; border-radius:6px; font-size:10px; color:var(--warn); margin-top:8px; line-height:1.4; }
+
+    /* ── QR Scanner ── */
+    #qrVideo { width:100%; border-radius:8px; background:#000; }
+    #qrCanvas { display:none; }
+    .qr-result { padding:8px; background:var(--code-bg); border:1px solid var(--border); border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--accent); word-break:break-all; margin-top:8px; }
+  </style>
+</head>
+<body>
+  <!-- Lock / Setup Screen -->
+  <div id="lockView" class="view view-center lock-screen">
+    <div class="lock-icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+      </svg>
+    </div>
+    <h2 id="lockTitle">Unlock Vault</h2>
+    <p class="subtitle" id="lockSubtitle">Enter your master password</p>
+    <div class="hint-display" id="hintDisplay" style="display:none"></div>
+    <div class="input-group">
+      <input type="password" id="masterPassword" placeholder="Master password" autofocus>
+      <div class="error-msg" id="lockError"></div>
+    </div>
+    <div class="input-group" id="confirmGroup" style="display:none">
+      <input type="password" id="confirmPassword" placeholder="Confirm password">
+    </div>
+    <div class="input-group" id="hintGroup" style="display:none">
+      <input type="text" id="hintInput" placeholder="Password hint (optional)">
+    </div>
+    <div class="remember-row" id="rememberGroup">
+      <input type="checkbox" id="rememberCheck">
+      <label for="rememberCheck">Remember for this session</label>
+      <svg class="warn-icon" tabindex="0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <div class="tooltip-bubble">
+        <strong>Security Warning</strong><br>
+        Only enable this on a device you personally own and trust. Your master password will remain cached in memory until you lock the vault or close the browser. Anyone with access to this device could view your TOTP codes while the session is active.
+      </div>
+    </div>
+    <button class="btn btn-primary" id="unlockBtn" style="width:100%">Unlock</button>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashView" class="view">
+    <div class="header">
+      <h1>Cyphr</h1>
+      <div class="header-actions">
+        <button class="btn btn-icon" id="addBtn" title="Add account">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <button class="btn btn-icon" id="settingsBtn" title="Settings">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        </button>
+        <button class="btn btn-icon" id="lockBtn" title="Lock vault">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search accounts...">
+    </div>
+    <div class="accounts-list" id="accountsList"></div>
+    <div class="status-bar">
+      <span><span class="status-dot"></span>Encrypted &middot; Local only</span>
+      <span id="accountCount"></span>
+    </div>
+  </div>
+
+  <!-- Add Account -->
+  <div id="addView" class="view form-view">
+    <div class="form-title">
+      <button class="btn btn-icon" id="addBackBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+      Add Account
+    </div>
+    <div class="form-group">
+      <label>otpauth:// URL</label>
+      <div class="input-with-paste">
+        <textarea id="otpauthUrl" rows="2" placeholder="otpauth://totp/Issuer:user@example.com?secret=BASE32SECRET&issuer=Issuer"></textarea>
+        <button class="btn btn-icon btn-paste" data-target="otpauthUrl" title="Paste from clipboard"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></button>
+      </div>
+      <div class="hint">Paste the full otpauth:// URL from your 2FA setup</div>
+    </div>
+    <div class="or-divider">or enter manually</div>
+    <div class="form-group">
+      <label>Issuer</label>
+      <input type="text" id="addIssuer" placeholder="e.g. GitHub, AWS, Google">
+    </div>
+    <div class="form-group">
+      <label>Account</label>
+      <input type="text" id="addAccount" placeholder="e.g. user@example.com">
+    </div>
+    <div class="form-group">
+      <label>Secret (Base32)</label>
+      <input type="text" id="addSecret" placeholder="JBSWY3DPEHPK3PXP">
+    </div>
+    <div class="form-group">
+      <label>Icon</label>
+      <div class="icon-picker-row">
+        <div class="icon-preview" id="addIconPreview" title="Auto-detected from issuer">?</div>
+        <div class="icon-picker-options">
+          <div class="input-with-paste">
+            <input type="text" id="addIconUrl" placeholder="Custom icon URL (optional)">
+            <button class="btn btn-icon btn-paste" data-target="addIconUrl" title="Paste from clipboard"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></button>
+          </div>
+          <div class="hint">Leave blank for auto-detected icon</div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Whitelisted Domains</label>
+      <div class="domain-tags-wrap" id="addDomainsWrap">
+        <input class="dtag-input" id="addDomainInput" placeholder="Type domain + Enter">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost btn-sm" id="addCancelBtn">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="addSaveBtn">Save Account</button>
+    </div>
+  </div>
+
+  <!-- Edit Account -->
+  <div id="editView" class="view form-view">
+    <div class="form-title">
+      <button class="btn btn-icon" id="editBackBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+      Edit Account
+    </div>
+    <div class="form-group">
+      <label>Issuer</label>
+      <input type="text" id="editIssuer">
+    </div>
+    <div class="form-group">
+      <label>Account</label>
+      <input type="text" id="editAccount">
+    </div>
+    <div class="form-group">
+      <label>Icon</label>
+      <div class="icon-picker-row">
+        <div class="icon-preview" id="editIconPreview">?</div>
+        <div class="icon-picker-options">
+          <div class="input-with-paste">
+            <input type="text" id="editIconUrl" placeholder="Custom icon URL (optional)">
+            <button class="btn btn-icon btn-paste" data-target="editIconUrl" title="Paste from clipboard"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></button>
+          </div>
+          <div class="hint">Leave blank for auto-detected icon</div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Whitelisted Domains</label>
+      <div class="domain-tags-wrap" id="editDomainsWrap">
+        <input class="dtag-input" id="editDomainInput" placeholder="Type domain + Enter">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-danger btn-sm" id="editDeleteBtn">Delete</button>
+      <button class="btn btn-ghost btn-sm" id="editCancelBtn">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="editSaveBtn">Save</button>
+    </div>
+    <input type="hidden" id="editIndex">
+  </div>
+
+  <!-- Change Password -->
+  <div id="changePwView" class="view form-view">
+    <div class="form-title">
+      <button class="btn btn-icon" id="changePwBackBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+      Change Master Password
+    </div>
+    <div class="form-group">
+      <label>Current Password</label>
+      <input type="password" id="cpCurrent" placeholder="Enter current password">
+    </div>
+    <div class="form-group">
+      <label>New Password</label>
+      <input type="password" id="cpNew" placeholder="Enter new password (min 8 chars)">
+    </div>
+    <div class="form-group">
+      <label>Confirm New Password</label>
+      <input type="password" id="cpConfirm" placeholder="Confirm new password">
+    </div>
+    <div class="form-group">
+      <label>Password Hint (Optional)</label>
+      <input type="text" id="cpHint" placeholder="A hint to help you remember">
+      <div class="hint">This hint is stored unencrypted and visible on the lock screen</div>
+    </div>
+    <div class="error-msg" id="cpError" style="margin-bottom:8px"></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost btn-sm" id="cpCancelBtn">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="cpSaveBtn">Change Password</button>
+    </div>
+  </div>
+
+  <!-- Settings -->
+  <div id="settingsView" class="view form-view">
+    <div class="form-title">
+      <button class="btn btn-icon" id="settingsBackBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+      Settings
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Auto-fill on whitelisted sites</div><div class="setting-desc">Show inline popup and fill codes automatically</div></div>
+      <label class="toggle"><input type="checkbox" id="setAutofill" checked><span class="slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Auto-copy code to clipboard</div><div class="setting-desc">Copy TOTP code when generated</div></div>
+      <label class="toggle"><input type="checkbox" id="setAutoCopy"><span class="slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Clipboard expiration</div><div class="setting-desc">Clear clipboard after copying</div></div>
+      <select class="setting-select" id="setClipExpiry">
+        <option value="0">Never</option>
+        <option value="15">15 seconds</option>
+        <option value="30">30 seconds</option>
+        <option value="60">1 minute</option>
+        <option value="120">2 minutes</option>
+      </select>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Auto-submit after autofill</div><div class="setting-desc">Submit the form automatically after filling the code</div></div>
+      <label class="toggle"><input type="checkbox" id="setAutoSubmit"><span class="slider"></span></label>
+    </div>
+    <div class="setting-row">
+      <div><div class="setting-label">Expire session on inactivity</div><div class="setting-desc">Auto-lock after 5 minutes idle. Off by default — vault stays unlocked until you lock it or close the browser.</div></div>
+      <label class="toggle"><input type="checkbox" id="setSessionExpires"><span class="slider"></span></label>
+    </div>
+    <div style="margin-top:16px;display:flex;flex-direction:column;gap:6px">
+      <button class="btn btn-ghost btn-sm" id="changePwBtn" style="justify-content:flex-start;padding:8px 10px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        Change Master Password
+      </button>
+      <button class="btn btn-ghost btn-sm" id="exportBtn" style="justify-content:flex-start;padding:8px 10px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export Vault
+      </button>
+      <button class="btn btn-ghost btn-sm" id="importBtn" style="justify-content:flex-start;padding:8px 10px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Import Vault
+      </button>
+      <button class="btn btn-ghost btn-sm" id="qrScanBtn" style="justify-content:flex-start;padding:8px 10px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/></svg>
+        Scan QR Code
+      </button>
+      <button class="btn btn-ghost btn-sm" id="aboutBtn" style="justify-content:flex-start;padding:8px 10px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        About
+      </button>
+    </div>
+  </div>
+
+  <!-- Export -->
+  <div id="exportView" class="view form-view">
+    <div class="form-title">
+      <button class="btn btn-icon" id="exportBackBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+      Export Vault
+    </div>
+    <div class="export-options">
+      <div class="export-option" id="exportEncrypted">
+        <h4>Encrypted Export</h4>
+        <p>AES-256-GCM encrypted. Requires password to import.</p>
+      </div>
+      <div class="export-option" id="exportPlaintext">
+        <h4>Plaintext Export</h4>
+        <p>Unencrypted JSON. Secrets visible in plain text.</p>
+        <div class="warn-box">Your TOTP secrets will be visible to anyone with access to this file. Only use on a trusted device.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import -->
+  <div id="importView" class="view form-view">
+    <div class="form-title">
+      <button class="btn btn-icon" id="importBackBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+      Import Vault
+    </div>
+    <div class="form-group">
+      <label>Paste JSON, drag file, or browse</label>
+      <textarea id="importText" placeholder="Paste vault JSON or drag a .json file into this box..." style="width:100%;height:90px;font-size:11px;font-family:monospace;resize:vertical;border:2px dashed var(--border);border-radius:6px;padding:6px;background:var(--bg2);color:var(--text1)"></textarea>
+      <input type="file" id="importFile" accept=".json" style="font-size:11px;color:var(--text2);margin-top:4px">
+    </div>
+    <div class="form-group" id="importPwGroup" style="display:none">
+      <label>Decryption Password</label>
+      <input type="password" id="importPassword" placeholder="Password for encrypted file">
+    </div>
+    <div class="form-group">
+      <label class="setting-label" style="display:flex;align-items:center;gap:6px">
+        <input type="checkbox" id="importReplace" style="width:14px;height:14px;accent-color:var(--accent)">
+        Replace existing accounts (instead of merge)
+      </label>
+    </div>
+    <div class="error-msg" id="importError" style="margin-bottom:8px"></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost btn-sm" id="importCancelBtn">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="importDoBtn">Import</button>
+    </div>
+  </div>
+
+  <!-- QR Scanner -->
+  <div id="qrView" class="view form-view">
+    <div class="form-title">
+      <button class="btn btn-icon" id="qrBackBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+      Scan QR Code
+    </div>
+    <video id="qrVideo" autoplay playsinline></video>
+    <canvas id="qrCanvas"></canvas>
+    <div class="form-group" style="margin-top:8px">
+      <label>Or upload QR image</label>
+      <input type="file" id="qrFileInput" accept="image/*" style="font-size:11px;color:var(--text2)">
+    </div>
+    <div class="qr-result" id="qrResult" style="display:none"></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost btn-sm" id="qrCancelBtn">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="qrAddBtn" style="display:none">Add Account</button>
+    </div>
+  </div>
+
+  <!-- About -->
+  <div id="aboutView" class="view form-view">
+    <div class="form-title">
+      <button class="btn btn-icon" id="aboutBackBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+      About
+    </div>
+    <div class="about-card">
+      <div class="lock-icon" style="margin:0 auto 12px">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+      </div>
+      <h3>Cyphr</h3>
+      <p>Local-only, master-password encrypted TOTP management with whitelisted domain autofill.</p>
+      <span class="version">v1.1.0</span>
+      <div class="about-author">
+        <span>Cristhian Espinosa</span>
+        <p>Developer & Creator</p>
+      </div>
+      <div style="margin-top:16px;font-size:10px;color:var(--text2);line-height:1.6">
+        <p>AES-256-GCM encryption with PBKDF2 (600k iterations)</p>
+        <p>RFC 6238 TOTP implementation</p>
+        <p>All data stored locally. No cloud. No tracking.</p>
+        <p style="margin-top:8px">Keyboard shortcut: <span style="font-family:'JetBrains Mono',monospace;background:var(--surface2);padding:2px 6px;border-radius:3px">Ctrl+Shift+L</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Entry -->
+  <div id="exportEntryView" class="view form-view">
+    <div class="form-title">
+      <button class="btn btn-icon" id="exportEntryBackBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+      <span id="exportEntryTitle">Export Account</span>
+    </div>
+    <div style="text-align:center;padding:8px 0">
+      <div id="exportEntryQR" style="display:inline-block;background:#fff;padding:8px;border-radius:8px"></div>
+    </div>
+    <div class="form-group">
+      <label>otpauth:// URL</label>
+      <textarea id="exportEntryUrl" rows="3" readonly style="font-size:10px;word-break:break-all;cursor:text;user-select:all"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost btn-sm" id="exportEntryCopyBtn">Copy URL</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="totp.js"></script>
+  <script src="qrcode-gen.min.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+.DS_Store
+.env
+.env.*
+*.xpi
+web-ext-artifacts/
+.amo-upload-uuid
+.playwright-mcp/
+node_modules/
+cyphr-encrypted.json
+cyphr-plaintext.json

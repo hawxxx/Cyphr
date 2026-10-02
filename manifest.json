@@ -1,0 +1,49 @@
+{
+  "manifest_version": 2,
+  "name": "Cyphr",
+  "version": "1.1.1",
+  "description": "Local-only, master-password encrypted TOTP vault with whitelisted domain autofill",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "cyphr@hawxxx.github.io",
+      "strict_min_version": "115.0"
+    }
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "clipboardRead",
+    "clipboardWrite",
+    "contextMenus",
+    "downloads"
+  ],
+  "commands": {
+    "autofill-totp": {
+      "suggested_key": { "default": "Ctrl+Shift+L" },
+      "description": "Autofill TOTP code on current page"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "scripts": ["totp.js", "crypto.js", "jsQR.min.js", "background.js"]
+  },
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}
